@@ -9,12 +9,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/books")
@@ -37,6 +37,32 @@ public class BookController {
         return mapper.map(entity, BookDTO.class);
     }
 
+    @GetMapping("{id}")
+    public BookDTO getDetails(@PathVariable("id") Long id) {
+        Book book = service.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return mapper.map(book, BookDTO.class);
+    }
+
+    @DeleteMapping("{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("id") Long id) {
+        service.delete(service.getById(id).orElseThrow(NoSuchElementException::new));
+    }
+
+    @PutMapping("{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public BookDTO update(@RequestBody BookDTO bookDTO, @PathVariable("id") Long id) {
+        Book book =  service.getById(id).orElseThrow(NoSuchElementException::new);
+
+        book.setAuthor(bookDTO.getAuthor());
+        book.setTitle(bookDTO.getTitle());
+
+        book = service.update(book);
+
+        return mapper.map(book, BookDTO.class);
+    }
+
+    // Exceptions Handlers
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrors handleValidationException(MethodArgumentNotValidException exception) {
@@ -46,7 +72,13 @@ public class BookController {
 
     @ExceptionHandler(BussinesException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrors handleBussinesException(BussinesException exception)  {
+    public ApiErrors handleBussinesException(BussinesException exception) {
+        return new ApiErrors(exception);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrors handleNotFoundException(NoSuchElementException exception) {
         return new ApiErrors(exception);
     }
 }

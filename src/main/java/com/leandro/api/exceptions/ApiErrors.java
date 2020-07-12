@@ -6,6 +6,7 @@ import org.springframework.validation.BindingResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Getter
 public class ApiErrors {
@@ -18,6 +19,10 @@ public class ApiErrors {
     }
 
     public ApiErrors(BussinesException exception){
+        this.errors = Arrays.asList(exception.getMessage());
+    }
+
+    public ApiErrors(NoSuchElementException exception){
         this.errors = Arrays.asList(exception.getMessage());
     }
 }
