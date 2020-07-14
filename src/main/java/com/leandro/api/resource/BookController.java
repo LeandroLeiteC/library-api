@@ -1,20 +1,21 @@
-package com.leandro.api.resouce;
+package com.leandro.api.resource;
 
 import com.leandro.api.dto.BookDTO;
-import com.leandro.api.exceptions.ApiErrors;
-import com.leandro.api.exceptions.BussinesException;
 import com.leandro.model.entity.Book;
 import com.leandro.service.BookService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
@@ -43,6 +44,16 @@ public class BookController {
         return mapper.map(book, BookDTO.class);
     }
 
+    @GetMapping
+    public Page<BookDTO> find(BookDTO dto, Pageable pageable) {
+        Page<Book> result = service.find(mapper.map(dto, Book.class), pageable);
+        List<BookDTO> content = result.getContent()
+                .stream()
+                .map(book -> mapper.map(book, BookDTO.class))
+                .collect(Collectors.toList());
+        return new PageImpl<>(content, result.getPageable(), result.getTotalElements());
+    }
+
     @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable("id") Long id) {
@@ -52,7 +63,7 @@ public class BookController {
     @PutMapping("{id}")
     @ResponseStatus(HttpStatus.OK)
     public BookDTO update(@RequestBody BookDTO bookDTO, @PathVariable("id") Long id) {
-        Book book =  service.getById(id).orElseThrow(NoSuchElementException::new);
+        Book book = service.getById(id).orElseThrow(NoSuchElementException::new);
 
         book.setAuthor(bookDTO.getAuthor());
         book.setTitle(bookDTO.getTitle());
@@ -60,25 +71,5 @@ public class BookController {
         book = service.update(book);
 
         return mapper.map(book, BookDTO.class);
-    }
-
-    // Exceptions Handlers
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrors handleValidationException(MethodArgumentNotValidException exception) {
-        BindingResult bindingResult = exception.getBindingResult();
-        return new ApiErrors(bindingResult);
-    }
-
-    @ExceptionHandler(BussinesException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrors handleBussinesException(BussinesException exception) {
-        return new ApiErrors(exception);
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrors handleNotFoundException(NoSuchElementException exception) {
-        return new ApiErrors(exception);
     }
 }

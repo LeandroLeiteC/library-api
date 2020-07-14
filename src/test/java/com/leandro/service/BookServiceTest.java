@@ -9,13 +9,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,17 +119,15 @@ class BookServiceTest {
 
     @Test
     @DisplayName("Deve deletar um livro")
-    void deleteTest() {
+    void deleteBookTest() {
         // cenário
-        Long id = 1L;
-        Book savedBook = createValidBook();
-        savedBook.setId(id);
+        Book book = Book.builder().id(1L).build();
 
         // execução
-        assertDoesNotThrow(() -> service.delete(savedBook));
+        assertDoesNotThrow(() -> service.delete(book));
 
         // verificação
-        Mockito.verify(repository, Mockito.times(1)).delete(savedBook);
+        Mockito.verify(repository, Mockito.times(1)).delete(book);
     }
 
     @Test
@@ -150,8 +152,7 @@ class BookServiceTest {
     void updateTest() {
         // cenário
         Long id = 1L;
-        Book updatingbook = createValidBook();
-        updatingbook.setId(id);
+        Book updatingbook = Book.builder().id(id).build();
 
         Book updatedBook = createValidBook();
         updatedBook.setId(id);
@@ -173,7 +174,7 @@ class BookServiceTest {
     @DisplayName("Deve lançar um erro quando atualizar um livro com id nulo")
     void updateInexistenceIdBookTest() {
         // cenário
-        Book book = createValidBook();
+        Book book = new Book();
 
         // execução
         Throwable exception = Assertions.catchThrowable(() -> service.update(book));
@@ -184,5 +185,22 @@ class BookServiceTest {
                 .hasMessage("Book id cant be null.");
 
         Mockito.verify(repository, Mockito.never()).save(book);
+    }
+
+    @Test
+    @DisplayName("Deve filtrar um livro pelas propriedades")
+    void findBookTest() {
+        Book book = createValidBook();
+        List<Book> list = Arrays.asList(book);
+        Page<Book> page = new PageImpl<>(list, PageRequest.of(0, 10), 1);
+
+        Mockito.when(repository.findAll(Mockito.any(Example.class), Mockito.any(PageRequest.class))).thenReturn(page);
+
+        Page<Book> result = service.find(book, PageRequest.of(0, 10));
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).isEqualTo(list);
+        assertThat(result.getPageable().getPageNumber()).isZero();
+        assertThat(result.getPageable().getPageSize()).isEqualTo(10);
     }
 }

@@ -2,6 +2,7 @@ package com.leandro.api.exceptions;
 
 import lombok.Getter;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,5 +25,9 @@ public class ApiErrors {
 
     public ApiErrors(NoSuchElementException exception){
         this.errors = Arrays.asList(exception.getMessage());
+    }
+
+    public ApiErrors(ResponseStatusException exception) {
+        this.errors = Arrays.asList(exception.getReason());
     }
 }
