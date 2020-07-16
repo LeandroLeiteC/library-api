@@ -2,6 +2,7 @@ package com.leandro.service.impl;
 
 import com.leandro.api.exceptions.BussinesException;
 import com.leandro.model.entity.Book;
+import com.leandro.model.entity.Loan;
 import com.leandro.model.repository.BookRepository;
 import com.leandro.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,4 @@ public class BookServiceImpl implements BookService {
     public Optional<Book> findByIsbn(String isbn) {
         return repository.findByIsbn(isbn);
     }
-
-
 }

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.leandro</groupId>
-	<artifactId>library-apy</artifactId>
+	<artifactId>library-api</artifactId>
 	<version>1.0.0</version>
 	<name>library-api</name>
 	<description>API de projeto de Bibliotecas</description>

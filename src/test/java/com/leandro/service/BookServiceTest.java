@@ -2,6 +2,7 @@ package com.leandro.service;
 
 import com.leandro.api.exceptions.BussinesException;
 import com.leandro.model.entity.Book;
+import com.leandro.model.entity.Loan;
 import com.leandro.model.repository.BookRepository;
 import com.leandro.service.impl.BookServiceImpl;
 import org.assertj.core.api.Assertions;
@@ -11,10 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -219,4 +217,6 @@ class BookServiceTest {
 
         Mockito.verify(repository, Mockito.times(1)).findByIsbn(isbn);
     }
+
+
 }

@@ -56,4 +56,9 @@ public class LoanServiceImpl implements LoanService {
 
         return repository.findAll(Example.of(loan, matching), pageable);
     }
+
+    @Override
+    public Page<Loan> findLoansByBook(Book book, Pageable pageable) {
+        return repository.findByBook(book, pageable);
+    }
 }

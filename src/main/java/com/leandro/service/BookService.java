@@ -1,6 +1,7 @@
 package com.leandro.service;
 
 import com.leandro.model.entity.Book;
+import com.leandro.model.entity.Loan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

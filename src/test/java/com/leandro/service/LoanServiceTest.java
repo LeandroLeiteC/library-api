@@ -13,10 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -123,7 +120,7 @@ class LoanServiceTest {
 
         Optional<Loan> loan = service.findById(1L);
 
-        assertThat(loan.isPresent()).isFalse();
+        assertThat(loan).isNotPresent();
 
         Mockito.verify(repository, Mockito.times(1)).findById(Mockito.anyLong());
     }
@@ -161,5 +158,20 @@ class LoanServiceTest {
         assertThat(result.getContent()).isEqualTo(list);
         assertThat(result.getPageable().getPageNumber()).isZero();
         assertThat(result.getPageable().getPageSize()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Deve obter os empréstimos de um livro")
+    void findLoansByBook() {
+        Loan loan = Loan.builder().build();
+        Mockito.when(repository.findByBook(Mockito.any(Book.class), Mockito.any(Pageable.class)))
+                .thenReturn(new PageImpl<Loan>(Arrays.asList(loan), PageRequest.of(0, 100), 1));
+
+        Page<Loan> loans = service.findLoansByBook(Book.builder().build(), PageRequest.of(0, 100));
+
+        assertThat(loans.getContent()).hasSize(1);
+        assertThat(loans.getPageable().getPageNumber()).isZero();
+        assertThat(loans.getPageable().getPageSize()).isEqualTo(100);
+        assertThat(loans.getTotalElements()).isOne();
     }
 }

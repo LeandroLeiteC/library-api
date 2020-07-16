@@ -1,8 +1,10 @@
 package com.leandro.api.resource;
 
 import com.leandro.api.dto.BookDTO;
+import com.leandro.api.dto.LoanDTO;
 import com.leandro.model.entity.Book;
 import com.leandro.service.BookService;
+import com.leandro.service.LoanService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,11 +25,13 @@ public class BookController {
 
     private BookService service;
     private ModelMapper mapper;
+    private LoanService loanService;
 
     @Autowired
-    public BookController(BookService service, ModelMapper mapper) {
+    public BookController(BookService service, ModelMapper mapper, LoanService loanService) {
         this.service = service;
         this.mapper = mapper;
+        this.loanService = loanService;
     }
 
     @PostMapping
@@ -71,5 +75,11 @@ public class BookController {
         book = service.update(book);
 
         return mapper.map(book, BookDTO.class);
+    }
+
+    @GetMapping("{id}/loans")
+    public Page<LoanDTO> loansByBook(@PathVariable Long id, Pageable pageable) {
+        Book book = service.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+        return loanService.findLoansByBook(book, pageable).map(loan -> mapper.map(loan, LoanDTO.class));
     }
 }

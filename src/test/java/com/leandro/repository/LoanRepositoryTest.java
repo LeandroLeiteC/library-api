@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.awt.print.Pageable;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +69,23 @@ class LoanRepositoryTest {
                 .withIgnoreCase();
 
         Page<Loan> result = repository.findAll(Example.of(loan, matching), PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent()).contains(loan);
+        assertThat(result.getPageable().getPageSize()).isEqualTo(10);
+        assertThat(result.getPageable().getPageNumber()).isZero();
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos os loans de um book")
+    void findByBookTest() {
+        Book book = Book.builder().isbn("123").build();
+        entityManager.persist(book);
+
+        Loan loan = Loan.builder().book(book).build();
+        entityManager.persist(loan);
+
+        Page<Loan> result = repository.findByBook(book, PageRequest.of(0, 10));
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent()).contains(loan);

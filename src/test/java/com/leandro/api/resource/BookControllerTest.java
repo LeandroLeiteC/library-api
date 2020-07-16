@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leandro.api.dto.BookDTO;
 import com.leandro.api.exceptions.BussinesException;
 import com.leandro.model.entity.Book;
+import com.leandro.model.entity.Loan;
 import com.leandro.service.BookService;
+import com.leandro.service.LoanService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +45,10 @@ class BookControllerTest {
     MockMvc mvc;
 
     @MockBean
-    BookService service;
+    BookService bookService;
+
+    @MockBean
+    LoanService loanService;
 
     private BookDTO createNewBook() {
         return BookDTO.builder().author("Arthur").title("Meu livro").isbn("12345").build();
@@ -56,7 +61,7 @@ class BookControllerTest {
         BookDTO bookDTO = createNewBook();
         Book savedBook = Book.builder().author("Arthur").title("Meu livro").isbn("12345").id(1L).build();
 
-        BDDMockito.given(service.save(Mockito.any(Book.class))).willReturn(savedBook);
+        BDDMockito.given(bookService.save(Mockito.any(Book.class))).willReturn(savedBook);
 
         String json = new ObjectMapper().writeValueAsString(bookDTO);
 
@@ -97,7 +102,7 @@ class BookControllerTest {
         String json = new ObjectMapper().writeValueAsString(bookDTO);
         String mensagemErro = "Isbn já cadastrado.";
 
-        BDDMockito.given(service.save(Mockito.any(Book.class))).willThrow(new BussinesException("Isbn já cadastrado."));
+        BDDMockito.given(bookService.save(Mockito.any(Book.class))).willThrow(new BussinesException("Isbn já cadastrado."));
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .post(BOOK_API)
@@ -124,7 +129,7 @@ class BookControllerTest {
                 .isbn(createNewBook().getIsbn())
                 .build();
 
-        BDDMockito.given(service.getById(id)).willReturn(Optional.of(book));
+        BDDMockito.given(bookService.getById(id)).willReturn(Optional.of(book));
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -143,7 +148,7 @@ class BookControllerTest {
     @DisplayName("Deve retornar Resource not found quando o livro não existir na base")
     void bookNotFoundTest() throws Exception {
 
-        BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.empty());
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -161,7 +166,7 @@ class BookControllerTest {
         // cenário
         Long id = 1L;
 
-        BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.of(Book.builder().id(id).build()));
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.of(Book.builder().id(id).build()));
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -178,7 +183,7 @@ class BookControllerTest {
         // cenário
         Long id = 1L;
 
-        BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.empty());
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -205,8 +210,8 @@ class BookControllerTest {
                 .isbn(updatingBook.getIsbn())
                 .build();
 
-        BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.of(updatingBook));
-        BDDMockito.given(service.update(Mockito.any(Book.class))).willReturn(updatedBook);
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.of(updatingBook));
+        BDDMockito.given(bookService.update(Mockito.any(Book.class))).willReturn(updatedBook);
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -232,7 +237,7 @@ class BookControllerTest {
 
         String json = new ObjectMapper().writeValueAsString(createNewBook());
 
-        BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.empty());
 
         // execução
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -259,7 +264,7 @@ class BookControllerTest {
                 .isbn(createNewBook().getIsbn())
                 .build();
 
-        BDDMockito.given(service.find(Mockito.any(Book.class), Mockito.any(Pageable.class)))
+        BDDMockito.given(bookService.find(Mockito.any(Book.class), Mockito.any(Pageable.class)))
                 .willReturn(new PageImpl<Book>(Arrays.asList(book), PageRequest.of(0, 100), 1));
 
         String queryString = String.format("?title=%s&author=%s&page=0&size=100",
@@ -276,6 +281,46 @@ class BookControllerTest {
                 .andExpect(jsonPath("totalElements").value(1))
                 .andExpect(jsonPath("pageable.pageSize").value(100))
                 .andExpect(jsonPath("pageable.pageNumber").value(0));
+    }
+
+
+    @Test
+    @DisplayName("Deve encontrar todos os empréstimos de um livro")
+    void loansByBookTest() throws Exception {
+
+        Book book = Book.builder().build();
+        Loan loan = Loan.builder().build();
+
+
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.of(book));
+        BDDMockito.given(loanService.findLoansByBook(Mockito.any(Book.class), Mockito.any(Pageable.class)))
+                .willReturn(new PageImpl<Loan>(Arrays.asList(loan), PageRequest.of(0, 100), 1));
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .get(BOOK_API.concat("/1/loans"))
+                .accept(MediaType.APPLICATION_JSON);
+
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("content", hasSize(1)))
+                .andExpect(jsonPath("totalElements").value(1))
+                .andExpect(jsonPath("pageable.pageSize").value(100))
+                .andExpect(jsonPath("pageable.pageNumber").value(0));
+    }
+
+    @Test
+    @DisplayName("Deve lançar erro quando buscar empréstimo com livro inexistente")
+    void loansByInexistenceBookTest() throws Exception {
+        BDDMockito.given(bookService.getById(Mockito.anyLong())).willReturn(Optional.empty());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .get(BOOK_API.concat("/1/loans"))
+                .accept(MediaType.APPLICATION_JSON);
+
+        mvc.perform(request)
+                .andExpect(status().isNotFound());
+
+        Mockito.verify(loanService, Mockito.never()).findLoansByBook(Mockito.any(Book.class), Mockito.any(Pageable.class));
     }
 
 }
