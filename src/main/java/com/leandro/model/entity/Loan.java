@@ -5,18 +5,32 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.*;
 import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
 public class Loan {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
     private Long id;
+
+    @Column
     private String customer;
+
+    @ManyToOne
+    @JoinColumn
     private Book book;
+
+    @Column
     private LocalDate loanDate;
-    private Boolean returned;
+
+    @Column
+    private Boolean returned = false;
 
 }

@@ -66,14 +66,12 @@ class BookControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json);
 
-        mvc
-                .perform(request)
+        mvc.perform(request)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("id").value(1L))
                 .andExpect(jsonPath("title").value(bookDTO.getTitle()))
                 .andExpect(jsonPath("author").value(bookDTO.getAuthor()))
                 .andExpect(jsonPath("isbn").value(bookDTO.getIsbn()));
-
     }
 
     @Test
