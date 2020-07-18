@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.*;
@@ -42,17 +41,15 @@ class LoanServiceTest {
     @Test
     @DisplayName("Deve salvar um empréstimo")
     void saveTest() {
-        LocalDate date = LocalDate.now();
         Book book = Book.builder().id(1L).build();
         Loan loanToSave = Loan.builder()
-                .loanDate(date)
                 .customer("Leandro")
                 .book(book)
                 .build();
 
         Loan savedLoan = Loan.builder()
                 .id(1L)
-                .loanDate(date)
+                .loanDate(LocalDate.now())
                 .customer("Leandro")
                 .book(book)
                 .build();
@@ -64,7 +61,7 @@ class LoanServiceTest {
 
         assertThat(returnedLoan.getId()).isNotNull().isEqualTo(1L);
         assertThat(returnedLoan.getCustomer()).isEqualTo("Leandro");
-        assertThat(returnedLoan.getLoanDate()).isEqualTo(date);
+        assertThat(returnedLoan.getLoanDate()).isEqualTo(LocalDate.now());
         assertThat(returnedLoan.getBook().getId()).isEqualTo(book.getId());
 
         Mockito.verify(repository, Mockito.times(1)).save(loanToSave);
@@ -77,7 +74,6 @@ class LoanServiceTest {
         Loan loanToSave = Loan.builder()
                 .book(book)
                 .customer("Leandro")
-                .loanDate(LocalDate.now())
                 .build();
 
         Mockito.when(repository.existsByBookAndNotReturned(book)).thenReturn(true);
@@ -173,5 +169,19 @@ class LoanServiceTest {
         assertThat(loans.getPageable().getPageNumber()).isZero();
         assertThat(loans.getPageable().getPageSize()).isEqualTo(100);
         assertThat(loans.getTotalElements()).isOne();
+    }
+
+    @Test
+    @DisplayName("Deve obter todos os empréstimos atrasados")
+    void findAllLateLoansTest() {
+        Loan loan = Loan.builder().id(1L).loanDate(LocalDate.now().minusDays(10)).build();
+
+        Mockito.when(repository.findAllByLoanDateBeforeAndReturnedIsFalse(Mockito.any(LocalDate.class))).thenReturn(Arrays.asList(loan));
+
+        List<Loan> lateLoans = service.getAllLateLoans();
+
+        assertThat(lateLoans).hasSize(1).contains(loan);
+
+        Mockito.verify(repository, Mockito.times(1)).findAllByLoanDateBeforeAndReturnedIsFalse(Mockito.any(LocalDate.class));
     }
 }

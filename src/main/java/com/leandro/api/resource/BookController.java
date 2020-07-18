@@ -44,7 +44,7 @@ public class BookController {
 
     @GetMapping("{id}")
     public BookDTO getDetails(@PathVariable("id") Long id) {
-        Book book = service.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Book book = service.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
         return mapper.map(book, BookDTO.class);
     }
 

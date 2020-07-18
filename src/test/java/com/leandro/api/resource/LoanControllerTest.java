@@ -58,11 +58,11 @@ class LoanControllerTest {
     @DisplayName("Deve realizar um empréstimo")
     void createLoanTest() throws Exception {
 
-        BookDTO bookDTO = BookDTO.builder().isbn("123").build();
-        LoanDTO loanDTO = LoanDTO.builder().book(bookDTO).customer("Fulano").build();
+        BookDTO bookDTO = BookDTO.builder().id(2L).isbn("123").author("Author").title("Title").build();
+        LoanDTO loanDTO = LoanDTO.builder().book(bookDTO).customer("Fulano").customerEmail("customer@email.com").build();
 
-        Book book = Book.builder().isbn("123").build();
-        Loan loan = Loan.builder().id(1L).customer("Fulano").book(book).loanDate(LocalDate.now()).build();
+        Book book = Book.builder().id(2L).isbn("123").author("Author").title("Title").build();
+        Loan loan = Loan.builder().id(1L).book(book).loanDate(LocalDate.now()).customer("Fulano").customerEmail("customer@email.com").build();
 
         String json = new ObjectMapper().writeValueAsString(loanDTO);
 
@@ -78,15 +78,20 @@ class LoanControllerTest {
         mvc.perform(request)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("id").value(1L))
-                .andExpect(jsonPath("customer").value("Fulano"));
+                .andExpect(jsonPath("customer").value("Fulano"))
+                .andExpect(jsonPath("customerEmail").value("customer@email.com"))
+                .andExpect(jsonPath("book.id").value(2L))
+                .andExpect(jsonPath("book.isbn").value("123"))
+                .andExpect(jsonPath("book.title").value("Title"))
+                .andExpect(jsonPath("book.author").value("Author"));
     }
 
     @Test
     @DisplayName("Deve retornar erro ao tentar fazer empréstimo de livro inexistente")
     void invalidIsbnCreateLoanTest() throws Exception {
-        BookDTO bookDTO = BookDTO.builder().isbn("123").build();
-        LoanDTO dto = LoanDTO.builder().book(bookDTO).customer("Fulano").build();
-        String json = new ObjectMapper().writeValueAsString(dto);
+        BookDTO bookDTO = BookDTO.builder().id(2L).isbn("123").author("Author").title("Title").build();
+        LoanDTO loanDTO = LoanDTO.builder().book(bookDTO).customer("Fulano").customerEmail("customer@email.com").build();
+        String json = new ObjectMapper().writeValueAsString(loanDTO);
 
         BDDMockito.given(bookService.findByIsbn("123")).willReturn(Optional.empty());
 
@@ -107,9 +112,9 @@ class LoanControllerTest {
     @Test
     @DisplayName("Deve retornar erro ao tentar fazer empréstimo de livro emprestado")
     void loanedBookErrorOnCreateLoanTest() throws Exception {
-        BookDTO bookDTO = BookDTO.builder().isbn("123").build();
-        LoanDTO dto = LoanDTO.builder().book(bookDTO).customer("Fulano").build();
-        String json = new ObjectMapper().writeValueAsString(dto);
+        BookDTO bookDTO = BookDTO.builder().id(2L).isbn("123").author("Author").title("Title").build();
+        LoanDTO loanDTO = LoanDTO.builder().book(bookDTO).customer("Fulano").customerEmail("customer@email.com").build();
+        String json = new ObjectMapper().writeValueAsString(loanDTO);
         Book book = Book.builder().isbn("123").build();
 
         BDDMockito.given(bookService.findByIsbn("123")).willReturn(Optional.of(book));
