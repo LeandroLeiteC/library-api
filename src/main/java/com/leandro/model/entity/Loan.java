@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -23,14 +24,18 @@ public class Loan {
     @Column
     private String customer;
 
+    @Column(name = "customer_email")
+    private String customerEmail;
+
     @ManyToOne
     @JoinColumn(name = "id_book")
     private Book book;
 
-    @Column
+    @Column(updatable = true)
+    @CreationTimestamp
     private LocalDate loanDate;
 
-    @Column
-    private Boolean returned = false;
+    @Column(columnDefinition = "boolean default false", insertable = false, updatable = true)
+    private Boolean returned;
 
 }

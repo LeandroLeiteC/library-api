@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class LoanRepositoryTest {
         Book book = Book.builder().isbn("123").author("Author").title("Title").build();
         entityManager.persist(book);
 
-        Loan loan = Loan.builder().book(book).customer("Leandro").loanDate(LocalDate.now()).build();
+        Loan loan = Loan.builder().book(book).customer("Leandro").build();
         entityManager.persist(loan);
 
         boolean exists = repository.existsByBookAndNotReturned(loan.getBook());
@@ -91,5 +92,20 @@ class LoanRepositoryTest {
         assertThat(result.getContent()).contains(loan);
         assertThat(result.getPageable().getPageSize()).isEqualTo(10);
         assertThat(result.getPageable().getPageNumber()).isZero();
+    }
+
+    @Test
+    @DisplayName("Deve encontrar todos os empréstimos atrasados")
+    void findAllLateLoansTest() {
+        Loan loanToBeFound = Loan.builder().returned(false).build();
+        Loan loanToNotBeFound = Loan.builder().returned(false).build();
+
+        entityManager.persist(loanToBeFound);
+        loanToBeFound.setLoanDate(LocalDate.now().minusDays(10));
+        entityManager.persist(loanToNotBeFound);
+
+        List<Loan> lateLoans = repository.findAllByLoanDateBeforeAndReturnedIsFalse(LocalDate.now().minusDays(4));
+
+        assertThat(lateLoans).hasSize(1).contains(loanToBeFound);
     }
 }

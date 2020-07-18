@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/loans")
@@ -35,9 +35,11 @@ public class LoanController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public LoanDTO create(@RequestBody LoanDTO dto) {
+    public LoanDTO create( @Valid @RequestBody LoanDTO dto) {
         Book book = bookService.findByIsbn(dto.getBook().getIsbn()).orElseThrow(() -> new BussinesException("Book not found for passed isbn"));
-        Loan loan = loanService.save(Loan.builder().book(book).customer(dto.getCustomer()).loanDate(LocalDate.now()).build());
+        Loan loan = mapper.map(dto, Loan.class);
+        loan.setBook(book);
+        loan = loanService.save(loan);
         return mapper.map(loan, LoanDTO.class);
     }
 
